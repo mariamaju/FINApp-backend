@@ -12,6 +12,7 @@ const UserSchema = new mongoose.Schema({
   savings: { type: Number, required: true, default: 0 },
   loan: [ExpenseSchema],
   insurance: [ExpenseSchema],
-  subscription: [ExpenseSchema]
+  subscription: [ExpenseSchema],
+  transportation: [ExpenseSchema]
 });
 module.exports = mongoose.model('User', UserSchema);
