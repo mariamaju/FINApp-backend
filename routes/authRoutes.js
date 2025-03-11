@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const authMiddleware = require('../middlewares/authMiddleware');
 const router = express.Router();
 
 router.post('/register', async (req, res) => {
@@ -33,8 +34,33 @@ router.post('/login', async (req, res) => {
   }
   
 });
+
 router.get("/",(req,res)=>{
  console.log("data"); 
  res.send("data");
 })
+router.post('/addExpense',authMiddleware, async (req, res) => {
+  try {
+    const { income, savings, loan, insurance, subscription } = req.body;
+    console.log("data",req.body,req.user);
+    const updateData = {};
+    
+    if (income !== undefined) updateData.income = income;
+    if (savings !== undefined) updateData.savings = savings;
+    if (loan) updateData.$push = { ...updateData.$push, loan: { $each: loan } };
+    if (insurance) updateData.$push = { ...updateData.$push, insurance: { $each: insurance } };
+    if (subscription) updateData.$push = { ...updateData.$push, subscription: { $each: subscription } };
+
+    const updatedUser = await User.findByIdAndUpdate(req.user.id, updateData, { new: true });
+  
+    
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    res.json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating user financials', error });
+  }
+});
 module.exports = router;
