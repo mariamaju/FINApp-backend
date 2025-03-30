@@ -1,20 +1,29 @@
-const http = require('http');
-const express = require('express');
-const cors = require('cors');
-const connectDB = require('./config/db');
-const authRoutes = require('./routes/authRoutes');
+const http = require("http");
+const express = require("express");
+const cors = require("cors");
+const connectDB = require("./config/db");
+const authRoutes = require("./routes/authRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 
-connectDB();
+connectDB(); // Connect to MongoDB
+
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-app.use('/api/auth', authRoutes);
-//const server = http.createServer((req, res) => {
-  //  res.writeHead(200, { 'Content-Type': 'text/plain' });
-    //res.end('Hello, world2!\n');
-//});
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/payments", paymentRoutes);
 
-app.listen(3000, () => {
-    console.log('Server is running on http://localhost:3000');
+const PORT = process.env.PORT || 3000;
+const server = http.createServer(app);
+
+server.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error("Server Error:", err.message);
+  res.status(500).json({ message: "Internal Server Error" });
 });

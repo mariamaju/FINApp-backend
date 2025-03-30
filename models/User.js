@@ -14,6 +14,14 @@ const UserSchema = new mongoose.Schema({
   loan: [ExpenseSchema],
   insurance: [ExpenseSchema],
   subscription: [ExpenseSchema],
-  transportation: [ExpenseSchema]
+  transportation: [ExpenseSchema],
+  expenses: [
+    {
+      category: String,
+      amountSpent: Number,
+      categoryLimit: Number,
+    },
+  ]
+
 });
 module.exports = mongoose.model('User', UserSchema);
