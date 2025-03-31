@@ -1,18 +1,19 @@
 const express = require("express");
 const Payment = require("../models/Payment");
+const authMiddleware = require("../middlewares/authMiddleware");
 
 const router = express.Router();
 
 // Store a payment
-router.post("/", async (req, res) => {
+router.post("/", authMiddleware, async (req, res) => {
   try {
     const { amount, category } = req.body;
 
     if (!amount || !category) {
       return res.status(400).json({ message: "All fields are required" });
     }
-
-    const newPayment = new Payment({ amount, category });
+    console.log("data", req.body, req.user);
+    const newPayment = new Payment({user_id : req.user.id , amount, category });
     await newPayment.save();
 
     res.status(201).json({ message: "Payment saved successfully" });
