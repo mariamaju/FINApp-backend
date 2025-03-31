@@ -13,7 +13,19 @@ router.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
     const user = new User({ firstName,lastName, phone,bankName, email, password: hashedPassword });
     await user.save();
-    res.status(201).json({ message: 'User registered successfully' });
+    const token = jwt.sign({ id: user._id }, "mysecret", { expiresIn: '12h' });
+    res.status(201).json({ 
+      message: 'User registered successfully',
+      token,
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone,
+        bankName: user.bankName,
+        email: user.email
+      }
+    });
   } catch (error) {
     console.log("data",error);
     res.status(500).json({ error: error.message });
