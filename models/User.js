@@ -11,6 +11,8 @@ const UserSchema = new mongoose.Schema({
   password: { type: String, required: true },
   income: { type: Number, required: true, default: 0 },
   savings: { type: Number, required: true, default: 0 },
+  status: { type: String, enum: ['active', 'inactive'], default: 'active' },
+  joinedDate: { type: Date, default: Date.now },
   loan: [ExpenseSchema],
   insurance: [ExpenseSchema],
   subscription: [ExpenseSchema],
