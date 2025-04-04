@@ -1,3 +1,9 @@
+// This should be the VERY FIRST LINE
+require('dotenv').config();
+console.log("ENV VARIABLES LOADED?", {
+  razorpayKey: !!process.env.RAZORPAY_KEY_ID,
+  razorpaySecret: !!process.env.RAZORPAY_KEY_SECRET
+});
 const http = require("http");
 const express = require("express");
 const cors = require("cors");

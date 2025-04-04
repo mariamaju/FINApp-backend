@@ -20,9 +20,18 @@
     "@google/genai": "^0.7.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
+<<<<<<< HEAD
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "moment": "^2.30.1",
+    "mongoose": "^8.10.2",
+    "razorpay": "^2.9.6"
+=======
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "moment": "^2.30.1",
     "mongoose": "^8.10.2"
+>>>>>>> ca78e241ff60fc09cf2db0d3cbcf19d78cb4a6e9
   }
 }
