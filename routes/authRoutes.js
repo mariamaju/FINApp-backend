@@ -412,4 +412,18 @@ router.post("/generate", authMiddleware,  async (req, res) => {
 });
 
 
+// Add this new route to authRoutes.js
+router.get('/razorpay-key', authMiddleware, (req, res) => {
+  try {
+    res.json({
+      key: process.env.RAZORPAY_KEY_ID
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// All other existing routes remain unchanged
+
+
 module.exports = router;
