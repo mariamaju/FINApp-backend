@@ -81,23 +81,39 @@ router.post('/addExpense',authMiddleware, async (req, res) => {
     res.status(500).json({ message: 'Error updating user financials', error });
   }
 });
-router.get('/daily-spend-limit',authMiddleware , async (req, res) => {
+router.get('/daily-spend-limit', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const userPayments = await Payment.find({
+      user_id: req.user.id,
+      date: { $gte: startOfMonth }
+    });
+
     const totalLoan = user.loan.reduce((sum, item) => sum + item.amount, 0);
     const totalInsurance = user.insurance.reduce((sum, item) => sum + item.amount, 0);
     const totalSubscription = user.subscription.reduce((sum, item) => sum + item.amount, 0);
-    
-    const totalExpenses = totalLoan + totalInsurance + totalSubscription;
-    
-    const dailySpendLimit = (user.income - (totalExpenses + user.savings)) / 30;
+    const totalTransportation = user.transportation.reduce((sum, item) => sum + item.amount, 0);
+    const totalPreviousPayments = userPayments.reduce((sum, item) => sum + item.amount, 0);
 
-    res.json({ dailySpendLimit: dailySpendLimit.toFixed(2) });
+    const totalExpenses = totalLoan + totalInsurance + totalSubscription + totalTransportation + totalPreviousPayments;
+    const remainingBudget = user.income - (totalExpenses + user.savings);
+
+    const today = new Date();
+    const daysRemaining = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate() - today.getDate();
+    const dailySpendLimit = daysRemaining > 0 ? remainingBudget / daysRemaining : 0;
+
+    res.json({
+      dailySpendLimit: dailySpendLimit.toFixed(2),
+      totalPreviousPayments: totalPreviousPayments.toFixed(2)
+    });
   } catch (error) {
     res.status(500).json({ message: 'Error calculating daily spend limit', error });
   }
@@ -391,7 +407,7 @@ router.post("/generate", authMiddleware,  async (req, res) => {
             ).toFixed(2),
           };
         console.log('budget', budget, userPayments);
-        modifiedPrompt += `\n\nBudget: ${JSON.stringify(budget)}\nSpent: ${JSON.stringify(userSpending)}\nAnswer with less than 100 characters and in indian rupees.`; //add prompt to answer with less than 30 characters
+        modifiedPrompt += `\n\nThis is the budget user can spend for a month in indian rupee Budget: ${JSON.stringify(budget)}\n This is the amount already spend by the user - Spent: ${JSON.stringify(userSpending)}\nAnswer with less than 100 characters and in indian rupees.`; //add prompt to answer with less than 30 characters
       }else{
         modifiedPrompt += `\nAnswer with less than 100 characters.`; 
       }
