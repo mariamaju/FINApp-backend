@@ -7,6 +7,7 @@ const authMiddleware = require('../middlewares/authMiddleware');
 const router = express.Router();
 const Payment = require('../models/Payment');
 const ai = new GoogleGenAI({ apiKey: 'AIzaSyDxFu6RkezZKNj0viAqsF7XSYMsw1Qf_A8' });
+const passwordController = require('../controllers/passwordController');
 
 router.post('/register', async (req, res) => {
   try {
@@ -440,6 +441,7 @@ router.get('/razorpay-key', authMiddleware, (req, res) => {
 });
 
 // All other existing routes remain unchanged
-
+// New password reset route
+router.post('/reset-password', passwordController.resetPassword);
 
 module.exports = router;
