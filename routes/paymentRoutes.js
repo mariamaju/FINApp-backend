@@ -101,7 +101,7 @@ router.post("/verify", authMiddleware, async (req, res) => {
   //     message: "Error verifying payment"
   //   });
   // }
-  const { razorpay_payment_id } = req.body;
+  //const { razorpay_payment_id } = req.body;
 
   try {
     if (!razorpay_payment_id) {

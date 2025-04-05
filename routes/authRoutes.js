@@ -438,6 +438,41 @@ router.get('/razorpay-key', authMiddleware, (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// API to get user details
+router.get('/user-details', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password'); // Exclude password
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    res.status(500).json({ message: 'Error fetching user details', error });
+  }
+});
+
+// API to update user details
+router.put('/update-user', authMiddleware, async (req, res) => {
+  try {
+    const { firstName, lastName, phone, bankName, email } = req.body;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id, // Use req.user.id to get the user ID
+      { firstName, lastName, phone, bankName, email },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({ message: 'User updated successfully', user: updatedUser });
+  } catch (error) {
+    console.error('Error updating user details:', error);
+    res.status(500).json({ message: 'Error updating user details', error });
+  }
+});
 
 // All other existing routes remain unchanged
 

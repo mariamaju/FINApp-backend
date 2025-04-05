@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const ExpenseSchema = new mongoose.Schema({
   name: { type: String, required: true },
   amount: { type: Number, required: true }
+
 });
 
 const UserSchema = new mongoose.Schema({
@@ -13,6 +14,8 @@ const UserSchema = new mongoose.Schema({
   savings: { type: Number, required: true, default: 0 },
   status: { type: String, enum: ['active', 'inactive'], default: 'active' },
   joinedDate: { type: Date, default: Date.now },
+  phone: { type: String },
+  bankName: { type: String },
   loan: [ExpenseSchema],
   insurance: [ExpenseSchema],
   subscription: [ExpenseSchema],
