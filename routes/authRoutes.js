@@ -335,6 +335,13 @@ router.post("/generate", authMiddleware,  async (req, res) => {
 
     let modifiedPrompt = prompt;
 
+     const matchedTraining = trainingData.find(data => data.prompt.toLowerCase() === prompt.toLowerCase());
+
+      if (matchedTraining) {
+         return res.json({ response: matchedTraining.response });
+      }
+
+
       const spendingQuestionKeywords = ["how much can we spend", "budget for", "spending limit", "groceries", "dining", "shopping", "entertainment"];
       const isSpendingQuestion = spendingQuestionKeywords.some(keyword => prompt.toLowerCase().includes(keyword));
       console.log('isSpendingQuestion', isSpendingQuestion);
@@ -408,7 +415,8 @@ router.post("/generate", authMiddleware,  async (req, res) => {
             ).toFixed(2),
           };
         console.log('budget', budget, userPayments);
-        modifiedPrompt += `\n\nThis is the budget user can spend for a month in indian rupee Budget: ${JSON.stringify(budget)}\n This is the amount already spend by the user - Spent: ${JSON.stringify(userSpending)}\nAnswer with less than 100 characters and in indian rupees.`; //add prompt to answer with less than 30 characters
+        const context = trainingData.map(item => `Prompt: "${item.prompt}", Answer: "${item.response}"`).join("\n");
+        modifiedPrompt += `\n\nThis is the budget user can spend for a month in indian rupee Budget: ${JSON.stringify(budget)}\n This is the amount already spend by the user - Spent: ${JSON.stringify(userSpending)}\nAnswer with less than 100 characters and in indian rupees and also Here are some examples of user prompts and their corresponding answers:\n${context}\n\n `; //add prompt to answer with less than 30 characters
       }else{
         modifiedPrompt += `\nAnswer with less than 100 characters.`; 
       }
@@ -428,7 +436,6 @@ router.post("/generate", authMiddleware,  async (req, res) => {
   }
 });
 
-
 // Add this new route to authRoutes.js
 router.get('/razorpay-key', authMiddleware, (req, res) => {
   try {
@@ -440,6 +447,40 @@ router.get('/razorpay-key', authMiddleware, (req, res) => {
   }
 });
 
+router.get('/user-details', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password'); // Exclude password
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    res.status(500).json({ message: 'Error fetching user details', error });
+  }
+});
+
+// API to update user details
+router.put('/update-user', authMiddleware, async (req, res) => {
+  try {
+    const { firstName, lastName, phone, bankName, email } = req.body;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id, // Use req.user.id to get the user ID
+      { firstName, lastName, phone, bankName, email },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({ message: 'User updated successfully', user: updatedUser });
+  } catch (error) {
+    console.error('Error updating user details:', error);
+    res.status(500).json({ message: 'Error updating user details', error });
+  }
+});
 // All other existing routes remain unchanged
 // New password reset route
 router.post('/reset-password', passwordController.resetPassword);
