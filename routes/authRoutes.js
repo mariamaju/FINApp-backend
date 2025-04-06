@@ -7,6 +7,8 @@ const authMiddleware = require('../middlewares/authMiddleware');
 const router = express.Router();
 const Payment = require('../models/Payment');
 const ai = new GoogleGenAI({ apiKey: 'AIzaSyDxFu6RkezZKNj0viAqsF7XSYMsw1Qf_A8' });
+const trainingData = require('./trainingData');
+const passwordController = require('../Controllers/PasswordController');
 
 router.post('/register', async (req, res) => {
   try {
@@ -334,6 +336,13 @@ router.post("/generate", authMiddleware,  async (req, res) => {
 
     let modifiedPrompt = prompt;
 
+     const matchedTraining = trainingData.find(data => data.prompt.toLowerCase() === prompt.toLowerCase());
+
+      if (matchedTraining) {
+         return res.json({ response: matchedTraining.response });
+      }
+
+
       const spendingQuestionKeywords = ["how much can we spend", "budget for", "spending limit", "groceries", "dining", "shopping", "entertainment"];
       const isSpendingQuestion = spendingQuestionKeywords.some(keyword => prompt.toLowerCase().includes(keyword));
       console.log('isSpendingQuestion', isSpendingQuestion);
@@ -407,7 +416,8 @@ router.post("/generate", authMiddleware,  async (req, res) => {
             ).toFixed(2),
           };
         console.log('budget', budget, userPayments);
-        modifiedPrompt += `\n\nThis is the budget user can spend for a month in indian rupee Budget: ${JSON.stringify(budget)}\n This is the amount already spend by the user - Spent: ${JSON.stringify(userSpending)}\nAnswer with less than 100 characters and in indian rupees.`; //add prompt to answer with less than 30 characters
+        const context = trainingData.map(item => `Prompt: "${item.prompt}", Answer: "${item.response}"`).join("\n");
+        modifiedPrompt += `\n\nThis is the budget user can spend for a month in indian rupee Budget: ${JSON.stringify(budget)}\n This is the amount already spend by the user - Spent: ${JSON.stringify(userSpending)}\nAnswer with less than 100 characters and in indian rupees and also Here are some examples of user prompts and their corresponding answers:\n${context}\n\n `; //add prompt to answer with less than 30 characters
       }else{
         modifiedPrompt += `\nAnswer with less than 100 characters.`; 
       }
@@ -476,5 +486,6 @@ router.put('/update-user', authMiddleware, async (req, res) => {
 
 // All other existing routes remain unchanged
 
-
+// New password reset route
+router.post('/reset-password', passwordController.resetPassword);
 module.exports = router;
