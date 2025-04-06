@@ -6,7 +6,7 @@ const Payment = require("../models/Payment");
 const authMiddleware = require("../middlewares/authMiddleware");
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
-
+const User = require("../models/User");
 const router = express.Router();
 
 // Initialize Razorpay with environment variables
@@ -118,7 +118,7 @@ router.get('/payments-by-category', authMiddleware, async (req, res) => {
     const payments = await Payment.aggregate([
       {
         $match: {
-          user_id: mongoose.Types.ObjectId(req.user.id), 
+          user_id: new mongoose.Types.ObjectId(req.user.id), 
           date: { $gte: startOfMonth, $lte: endOfMonth } 
         }
       },
@@ -140,7 +140,7 @@ router.get('/payments-by-category', authMiddleware, async (req, res) => {
     ]);
 
     // Fetch user details
-    const user = await user.findById(req.user.id).select('-password'); 
+    const user = await User.findById(req.user.id).select('-password'); 
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
@@ -149,7 +149,7 @@ router.get('/payments-by-category', authMiddleware, async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Payments grouped by category for the current month",
-      user, 
+      user, // Include user details
       data: payments
     });
   } catch (error) {
