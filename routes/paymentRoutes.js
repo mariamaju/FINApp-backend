@@ -110,6 +110,111 @@ router.post("/verify", authMiddleware, async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
+router.get('/payments-by-category', authMiddleware, async (req, res) => {
+  try {
+    const startOfMonth = moment().startOf('month').toDate();
+    const endOfMonth = moment().endOf('month').toDate();
 
+    const payments = await Payment.aggregate([
+      {
+        $match: {
+          user_id: mongoose.Types.ObjectId(req.user.id), 
+          date: { $gte: startOfMonth, $lte: endOfMonth } 
+        }
+      },
+      {
+        $group: {
+          _id: "$category", 
+          totalAmount: { $sum: "$amount" }, 
+          payments: { $push: "$$ROOT" } 
+        }
+      },
+      {
+        $project: {
+          category: "$_id", 
+          totalAmount: 1,
+          payments: 1,
+          _id: 0 
+        }
+      }
+    ]);
 
+    // Fetch user details
+    const user = await user.findById(req.user.id).select('-password'); 
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Payments grouped by category for the current month",
+      user, 
+      data: payments
+    });
+  } catch (error) {
+    console.error("Error fetching payments grouped by category:", error);
+    res.status(500).json({ success: false, message: "Error fetching payments", error });
+  }
+});
+router.get("/total-expenses", authMiddleware,  async (req, res) => {
+  try {
+    const userId = req.user.id; // Get user ID from request
+    const date = new Date(); // Get current date
+
+    const startOfDay = moment(date).startOf("day").toDate();
+    const endOfDay = moment(date).endOf("day").toDate();
+
+    const totalExpenses = await Payment.aggregate([
+      {
+        $match: {
+          user_id: new mongoose.Types.ObjectId(userId),
+          date: { $gte: startOfDay, $lte: endOfDay },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: "$amount" },
+        },
+      },
+    ]);
+    console.log("totalExpenses", totalExpenses);
+    res.json({
+      date: moment(date).format("YYYY-MM-DD"),
+      totalExpenses: totalExpenses.length > 0 ? totalExpenses[0].totalAmount : 0,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+router.post("/", authMiddleware, async (req, res) => {
+  try {
+    const { amount, category } = req.body;
+
+    if (!amount || !category) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+    console.log("data", req.body, req.user);
+    const newPayment = new Payment({user_id : req.user.id , amount, category });
+    await newPayment.save();
+
+    res.status(201).json({ message: "Payment saved successfully" });
+  } catch (error) {
+    console.error("Error saving payment:", error);
+    res.status(500).json({ message: "Error saving payment" });
+  }
+});
+
+// Get all payments (optional)
+router.get("/", async (req, res) => {
+  try {
+    const payments = await Payment.find();
+    res.json(payments);
+  } catch (error) {
+    console.error("Error fetching payments:", error);
+    res.status(500).json({ message: "Error fetching payments" });
+  }
+});
 module.exports = router;
